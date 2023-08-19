@@ -53,109 +53,30 @@ volatile float RemainBatCapacity_mWh = 0;
 volatile float CargeBatCapacity_mWh = 0;
 const uint32_t BatCapacity_mWh = 200000;
 uint32_t Percent_temp = 0;
-/*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
-//Старт                                                                      ┃
-void ina239_StartUp(void)//                                                  ┃
-/*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛*/
-{  
-//  for (uint8_t i = 0; i < 17; i++)
+
+float ina239_ReadVoltage(void)
+{
   for (uint8_t i = 4; i < 8; i++)
   {
     INA_REG_Readed[i - 4] = ReadReg_INA(INA_REG[i][0], INA_REG[i][1]);
   }
-  INA_Voltage_mV = ((int16_t)(INA_REG_Readed[0])) * 3.125;
-  INA_Current_mA = ((int16_t)(INA_REG_Readed[2])) * 0.3;
-  
-  INA_Power_mW   = INA_REG_Readed[3] * 0.06;
-//  INA_Temperature_0C = INA_REG_Readed[1];
-//==============================================================================
-  if ((INA_Current_mA_temp > 0) && (INA_Current_mA < 0))
-  {
-    CargeBatCapacity_mWh = -RemainBatCapacity_mWh;
-  }
-  else if ((INA_Current_mA_temp < 0) && (INA_Current_mA > 0))
-  {
-    RemainBatCapacity_mWh = -CargeBatCapacity_mWh;
-  }
-  else if ((INA_Current_mA_temp < 0) && (INA_Current_mA == 0))
-  {
-    RemainBatCapacity_mWh = -BatCapacity_mWh;
-  }
-  else if ((INA_Current_mA_temp == 0) && (INA_Current_mA > 0))
-  {
-    RemainBatCapacity_mWh = -BatCapacity_mWh;
-  }
-//Расчитываем емкость исходя из времени конверсии АЦП и коэф. усреднения 4120x1024x2/10^6/3600
-  if (INA_Current_mA > 0)
-  {
-    if (RemainBatCapacity_mWh < 10* -BatCapacity_mWh)
-    {
-      RemainBatCapacity_mWh -= INA_Power_mW * 0.002343822; //При разряде примем мощность отрицательной
-    }
-    Percent_temp = 101 - RemainBatCapacity_mWh * -100 / BatCapacity_mWh;
-    if ((Percent_temp > 0) && (Percent_temp < 100))
-    {
-      battery = Percent_temp;
-    }
-    if (GLOBAL_FLASH_FLAG & EnableWrite_FLASH)
-    {
-      flashPage_write32(FloatToUint(RemainBatCapacity_mWh), 1024);
-    }
-  }
-  else if (INA_Current_mA < 0)
-  {
-    if (RemainBatCapacity_mWh < 10* BatCapacity_mWh)
-    {
-      CargeBatCapacity_mWh += INA_Power_mW * 0.002343822; //При заряде примем мощность положительной
-    }
-    Percent_temp = CargeBatCapacity_mWh * 100 / BatCapacity_mWh;
-    if (Percent_temp < 100)
-    {
-      battery = Percent_temp;
-    }
-
-    if (GLOBAL_FLASH_FLAG & EnableWrite_FLASH)
-    {
-      flashPage_write32(FloatToUint(CargeBatCapacity_mWh), 1024);
-    }
-  }
-  else
-  {
-    battery = 100;
-  }
-  INA_Current_mA_temp = INA_Current_mA;
-//==============================================================================
-/*  uint32_t K = 100000/(BATTERY_MAX_V-BATTERY_MIN_V);
-  uint32_t B = 100000*BATTERY_MIN_V/(BATTERY_MAX_V-BATTERY_MIN_V);
-  uint32_t P = (K * INA_Voltage_mV/100 - B) / 1000;
-  if (P <= 100)
-  {
-    battery = P;
-  }
-  else if (INA_Voltage_mV / 100 > BATTERY_MAX_V)
-  {
-    battery = 100;
-  }
-  else if (INA_Voltage_mV / 100 < BATTERY_MIN_V)
-  {
-    battery = 1;
-  }
-  */
-//==============================================================================
+  return ((int16_t)(INA_REG_Readed[0])) * 3.125;
 }
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
 //Установка низкого уровня ChipSelect                                        ┃
 void INA_CS_0(void)//                                                        ┃
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛*/
 {
-  LL_GPIO_ResetOutputPin(INA_CS_GPIO_Port, INA_CS_Pin);
+  //LL_GPIO_ResetOutputPin(SPI1_CS_GPIO_Port, SPI1_CS_Pin);
+  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 }
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
 //Установка высокого уровня ChipSelect                                       ┃
 void INA_CS_1(void)//                                                        ┃
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛*/
 {
-  LL_GPIO_SetOutputPin(INA_CS_GPIO_Port, INA_CS_Pin);
+  //LL_GPIO_SetOutputPin(SPI1_CS_GPIO_Port, SPI1_CS_Pin);
+  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 }
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
 // Функция, реализующая чтение указанного регистра                           ┃
@@ -167,7 +88,7 @@ uint32_t ReadReg_INA(uint8_t tx_cmd, uint8_t l_cmd)//                        ┃
   {
     return 0;
   }
-  irq_disable();
+
   uint8_t cmd = (tx_cmd << 2) | SPI_READ;
   uint8_t tx_data[4];
   uint32_t data = 0;
@@ -181,7 +102,7 @@ uint32_t ReadReg_INA(uint8_t tx_cmd, uint8_t l_cmd)//                        ┃
   {
     data += tx_data[(l_cmd / 8) - i - 1] << i * 8 ;
   }
-  irq_enable();
+
   return data;
 }
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
@@ -194,7 +115,7 @@ void WriteReg_INA(uint8_t tx_cmd, uint8_t l_cmd, uint32_t data)//            ┃
   {
     return;
   }
-  irq_disable();
+
   uint8_t cmd = (tx_cmd << 2) | SPI_WRITE;
   uint8_t rx_data[4];
   for (uint8_t i = 0; i < l_cmd / 8; i++)
@@ -209,7 +130,7 @@ void WriteReg_INA(uint8_t tx_cmd, uint8_t l_cmd, uint32_t data)//            ┃
 
   INA_CS_1();
   
-  irq_enable();
+
   return;
 }
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
@@ -352,7 +273,5 @@ void INA_INIT(void)//                                                        ┃
 //  INA_VTCT(0x07);
 //  INA_AVG(0x07);
   INA_CURRLSB(10000, 16666);
-  ina239_StartUp();
-  LL_TIM_EnableCounter(TIM6);
-  LL_TIM_EnableIT_UPDATE(TIM6);
+
 }

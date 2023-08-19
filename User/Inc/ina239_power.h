@@ -8,7 +8,7 @@ extern volatile float RemainBatCapacity_mWh;
 extern volatile float CargeBatCapacity_mWh;
 
 /* BEGIN Prototypes */
-void ina239_StartUp(void);
+float ina239_ReadVoltage(void);
 void INA_CS_0(void);
 void INA_CS_1(void);
 uint32_t ReadReg_INA(uint8_t, uint8_t);

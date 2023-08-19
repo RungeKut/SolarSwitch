@@ -1,0 +1,27 @@
+--cpu Cortex-M3
+"solarswitch\startup_stm32f103xb.o"
+"solarswitch\main.o"
+"solarswitch\gpio.o"
+"solarswitch\spi.o"
+"solarswitch\stm32f1xx_it.o"
+"solarswitch\stm32f1xx_hal_msp.o"
+"solarswitch\stm32f1xx_hal_gpio_ex.o"
+"solarswitch\stm32f1xx_hal_spi.o"
+"solarswitch\stm32f1xx_hal.o"
+"solarswitch\stm32f1xx_hal_rcc.o"
+"solarswitch\stm32f1xx_hal_rcc_ex.o"
+"solarswitch\stm32f1xx_hal_gpio.o"
+"solarswitch\stm32f1xx_hal_dma.o"
+"solarswitch\stm32f1xx_hal_cortex.o"
+"solarswitch\stm32f1xx_hal_pwr.o"
+"solarswitch\stm32f1xx_hal_flash.o"
+"solarswitch\stm32f1xx_hal_flash_ex.o"
+"solarswitch\stm32f1xx_hal_exti.o"
+"solarswitch\stm32f1xx_hal_tim.o"
+"solarswitch\stm32f1xx_hal_tim_ex.o"
+"solarswitch\system_stm32f1xx.o"
+"solarswitch\ina239_power.o"
+--strict --scatter "SolarSwitch\SolarSwitch.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "SolarSwitch.map" -o SolarSwitch\SolarSwitch.axf
